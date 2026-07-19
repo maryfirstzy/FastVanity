@@ -20,7 +20,7 @@ bool decodeBase58Prefix(const std::string& str, std::vector<unsigned char>& out_
     std::vector<unsigned char> tmp(str.length(), 0);
     for (size_t i = 0; i < str.length(); ++i) {
         size_t idx = BASE58_CHARS.find(str[i]);
-        if (idx == std::string::npos) return false; // Invalid Base58 character
+        if (idx == std::string::npos) return false;
         tmp[i] = static_cast<unsigned char>(idx);
     }
     
@@ -40,7 +40,6 @@ bool decodeBase58Prefix(const std::string& str, std::vector<unsigned char>& out_
         }
     }
     
-    // Extract the significant bytes matching the prefix length
     out_bytes.clear();
     for (int i = result_len - 1; i >= 0; --i) {
         out_bytes.push_back(result[i]);
@@ -73,7 +72,7 @@ std::string encodeBase58(const unsigned char* input, size_t len) {
 
 std::string finalizeAddress(const unsigned char* ripemd_payload) {
     unsigned char ripemd_res[RIPEMD160_DIGEST_LENGTH + 5];
-    ripemd_res[0] = 0x00;
+    ripemd_res[0] = 0x00; // Network byte
     std::memcpy(ripemd_res + 1, ripemd_payload, RIPEMD160_DIGEST_LENGTH);
     
     unsigned char checksum_sha1[SHA256_DIGEST_LENGTH];
@@ -97,8 +96,8 @@ void highSpeedSearchWorker(int thread_id) {
     std::random_device rd;
     std::mt19937_64 rng(rd() ^ thread_id);
     
-    unsigned char priv_key[32];
-    unsigned char serialized_pub[33];
+    unsigned char priv_key[32];          // Fixed array size definition
+    unsigned char serialized_pub[33];    // Fixed array size definition
     unsigned char sha256_res[SHA256_DIGEST_LENGTH];
     unsigned char ripemd_res[RIPEMD160_DIGEST_LENGTH];
     
@@ -121,10 +120,8 @@ void highSpeedSearchWorker(int thread_id) {
             size_t serialized_len = 33;
             secp256k1_ec_pubkey_serialize(ctx, serialized_pub, &serialized_len, &pubkey, SECP256K1_EC_COMPRESSED);
 
-            // 1. Fast SHA-256
             SHA256(serialized_pub, 33, sha256_res);
 
-            // 2. High-speed raw RIPEMD-160 processing
             unsigned int ripemd_len = 0;
             EVP_DigestInit_ex(mdctx, EVP_ripemd160(), nullptr);
             EVP_DigestUpdate(mdctx, sha256_res, SHA256_DIGEST_LENGTH);
@@ -136,7 +133,6 @@ void highSpeedSearchWorker(int thread_id) {
                 local_attempts = 0;
             }
 
-            // 3. ULTRA FAST COMPARISON: Check if raw bytes match target prefix layout
             if (std::memcmp(ripemd_res, target_bytes.data(), prefix_byte_len) == 0) {
                 bool expected = false;
                 if (found.compare_exchange_strong(expected, true)) {
@@ -160,7 +156,7 @@ void highSpeedSearchWorker(int thread_id) {
 }
 
 int main() {
-    std::string target_prefix = "RoseCross"; // Edit your target token pattern here
+    std::string target_prefix = "BTC"; // Edit your target token pattern here
     
     if (!decodeBase58Prefix(target_prefix, target_bytes)) {
         std::cerr << "❌ Error: Target prefix contains invalid Base58 characters!\n";
@@ -177,7 +173,7 @@ int main() {
     std::vector<std::thread> worker_threads;
 
     for (unsigned int i = 0; i < threads; ++i) {
-        worker_threads.push_back(std::thread(highSpeedSearchWorker));
+        worker_threads.push_back(std::thread(highSpeedSearchWorker, i)); // Fixed missing argument
     }
 
     while (!found) {
@@ -198,4 +194,3 @@ int main() {
     }
     return 0;
 }
-
