@@ -160,7 +160,7 @@ void highSpeedSearchWorker(int thread_id) {
 }
 
 int main() {
-    std::string target_prefix = "BTC"; // Edit your target token pattern here
+    std::string target_prefix = "RoseCross"; // Edit your target token pattern here
     
     if (!decodeBase58Prefix(target_prefix, target_bytes)) {
         std::cerr << "❌ Error: Target prefix contains invalid Base58 characters!\n";
