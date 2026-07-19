@@ -133,7 +133,7 @@ void highSpeedSearchWorker(std::string prefix, int thread_id) {
 }
 
 int main() {
-    std::string target_prefix = "BTC"; // Targets addresses starting with 1BTC
+    std::string target_prefix = "RoseCross"; // Targets addresses starting with 1BTC
     unsigned int threads = std::thread::hardware_concurrency();
     
     std::cout << "🚀 Starting Corrected Hashing Engine...\n";
